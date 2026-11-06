@@ -56,8 +56,51 @@ class FilesystemDisplay {
         this.dirpath = "";
         this.failed = false;
         this._noTracking = false;
+        this.isDetached = false;
         this._runNextTick = false;
         this._reading = false;
+
+        this.detach = () => {
+            this._noTracking = true;
+            this.isDetached = true;
+            const banner = document.querySelector("section#filesystem > h3.title > p:first-of-type");
+            if (banner) {
+                banner.innerText = "FILESYSTEM - TRACKING FAILED, RUNNING DETACHED FROM TTY";
+            }
+        };
+
+        this.attach = newPath => {
+            this._noTracking = false;
+            this.isDetached = false;
+            const banner = document.querySelector("section#filesystem > h3.title > p:first-of-type");
+            if (banner) {
+                banner.innerText = "FILESYSTEM";
+            }
+            if (newPath) {
+                this.cwd_path = newPath;
+                this.dirpath = newPath;
+                this.readFS(newPath);
+                this.watchFS(newPath);
+            }
+            this.followTab();
+        };
+
+        this.openDir = newPath => {
+            if (newPath && typeof newPath === "string") {
+                const fs = require("fs");
+                try {
+                    if (fs.existsSync(newPath) && fs.statSync(newPath).isDirectory()) {
+                        if (this._noTracking || this.isDetached) {
+                            this.attach(newPath);
+                        } else {
+                            this.cwd_path = newPath;
+                            this.readFS(newPath);
+                            this.watchFS(newPath);
+                        }
+                    }
+                } catch (err) {}
+            }
+        };
 
         this._timer = setInterval(() => {
             if (this._runNextTick === true) {
@@ -93,24 +136,29 @@ class FilesystemDisplay {
         };
 
         this.followTab = () => {
-            // Don't follow tabs when running in detached mode, see #432
-            if (this._noTracking) return false;
-
             let num = window.currentTerm;
+            if (!window.term || !window.term[num]) return false;
 
             window.term[num].oncwdchange = cwd => {
-                // See #501
-                if (this._noTracking) return false;
+                if (!cwd || window.currentTerm !== num) return false;
 
-                if (cwd && cwd !== this.cwd_path && window.currentTerm === num) {
-                    this.cwd_path = cwd;
-                    if (this._fsWatcher) {
-                        this._fsWatcher.close();
+                if (cwd.startsWith("FALLBACK |-- ")) {
+                    if (process.platform !== "win32" || !this.cwd_path) {
+                        this.cwd_path = cwd.slice(13);
+                        if (this._fsWatcher) {
+                            this._fsWatcher.close();
+                        }
+                        this.readFS(this.cwd_path);
+                        this.detach();
                     }
-                    if (cwd.startsWith("FALLBACK |-- ")) {
-                        this.readFS(cwd.slice(13));
-                        this._noTracking = true;
-                    } else {
+                } else {
+                    if (this._noTracking || this.isDetached) {
+                        this.attach(cwd);
+                    } else if (cwd !== this.cwd_path) {
+                        this.cwd_path = cwd;
+                        if (this._fsWatcher) {
+                            this._fsWatcher.close();
+                        }
                         this.readFS(cwd);
                         this.watchFS(cwd);
                     }
@@ -157,8 +205,11 @@ class FilesystemDisplay {
             document.getElementById("fs_disp_title_dir").innerText = this.dirpath;
             this.filesContainer.setAttribute("class", "");
             this.filesContainer.innerHTML = "";
-            if (this._noTracking) {
-                document.querySelector("section#filesystem > h3.title > p:first-of-type").innerText = "FILESYSTEM - TRACKING FAILED, RUNNING DETACHED FROM TTY";
+            const bannerReadFS = document.querySelector("section#filesystem > h3.title > p:first-of-type");
+            if (bannerReadFS) {
+                bannerReadFS.innerText = (this._noTracking || this.isDetached)
+                    ? "FILESYSTEM - TRACKING FAILED, RUNNING DETACHED FROM TTY"
+                    : "FILESYSTEM";
             }
 
             if (process.platform === "win32" && dir.endsWith(":")) dir = dir+"\\";
@@ -300,8 +351,11 @@ class FilesystemDisplay {
                 document.getElementById("fs_disp_title_dir").innerText = this.dirpath;
                 this.filesContainer.setAttribute("class", "");
             }
-            if (this._noTracking) {
-                document.querySelector("section#filesystem > h3.title > p:first-of-type").innerText = "FILESYSTEM - TRACKING FAILED, RUNNING DETACHED FROM TTY";
+            const bannerReadFS = document.querySelector("section#filesystem > h3.title > p:first-of-type");
+            if (bannerReadFS) {
+                bannerReadFS.innerText = (this._noTracking || this.isDetached)
+                    ? "FILESYSTEM - TRACKING FAILED, RUNNING DETACHED FROM TTY"
+                    : "FILESYSTEM";
             }
 
             let filesDOM = ``;

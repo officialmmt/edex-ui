@@ -173,6 +173,46 @@ class Terminal {
                 this.oncwdchange(this.cwd || null);
             };
 
+            this.isDetached = false;
+            if (process.platform === "win32") {
+                this.isDetached = false;
+            }
+            this.currentPath = "";
+            Object.defineProperty(this, "fs", {
+                get: () => window.fsDisp,
+                configurable: true
+            });
+            this.parent = {
+                get fs() {
+                    return window.fsDisp;
+                }
+            };
+
+            if (this.term && this.term.onTitleChange) {
+                this.term.onTitleChange(title => {
+                    if (title) {
+                        const cleanPath = title.replace(/^PS\s+/, '').trim();
+                        const fs = require('fs');
+                        try {
+                            if (fs.existsSync(cleanPath) && fs.statSync(cleanPath).isDirectory()) {
+                                this.currentPath = cleanPath;
+                                this.cwd = cleanPath;
+                                if (this.oncwdchange) {
+                                    this.oncwdchange(cleanPath);
+                                }
+                                if (this.parent && this.parent.fs) {
+                                    this.parent.fs.openDir(cleanPath);
+                                } else if (this.fs) {
+                                    this.fs.openDir(cleanPath);
+                                } else if (window.fsDisp) {
+                                    window.fsDisp.openDir(cleanPath);
+                                }
+                            }
+                        } catch (err) {}
+                    }
+                });
+            }
+
             let sockHost = opts.host || "127.0.0.1";
             let sockPort = this.port;
 
@@ -313,6 +353,10 @@ class Terminal {
             this.onopened = () => {};
             this.onresize = () => {};
             this.ondisconnected = () => {};
+            this.isDetached = false;
+            if (process.platform === "win32") {
+                this.isDetached = false;
+            }
 
             this._disableCWDtracking = false;
             this._getTtyCWD = tty => {
@@ -366,23 +410,27 @@ class Terminal {
             this._tick = setInterval(() => {
                 if (this._nextTickUpdateTtyCWD && this._disableCWDtracking === false) {
                     this._nextTickUpdateTtyCWD = false;
-                    this._getTtyCWD(this.tty).then(cwd => {
-                        if (this.tty._cwd === cwd) return;
-                        this.tty._cwd = cwd;
-                        if (this.renderer) {
-                            this.renderer.send("terminal_channel-"+this.port, "New cwd", cwd);
-                        }
-                    }).catch(e => {
-                        if (!this._closed) {
-                            console.log("Error while tracking TTY working directory: ", e);
-                            this._disableCWDtracking = true;
-                            try {
-                                this.renderer.send("terminal_channel-"+this.port, "Fallback cwd", opts.cwd || process.env.PWD);
-                            } catch(e) {
-                                // renderer closed
+                    if (process.platform === "win32") {
+                        this._disableCWDtracking = true;
+                    } else {
+                        this._getTtyCWD(this.tty).then(cwd => {
+                            if (this.tty._cwd === cwd) return;
+                            this.tty._cwd = cwd;
+                            if (this.renderer) {
+                                this.renderer.send("terminal_channel-"+this.port, "New cwd", cwd);
                             }
-                        }
-                    });
+                        }).catch(e => {
+                            if (!this._closed) {
+                                console.log("Error while tracking TTY working directory: ", e);
+                                this._disableCWDtracking = true;
+                                try {
+                                    this.renderer.send("terminal_channel-"+this.port, "Fallback cwd", opts.cwd || process.env.PWD);
+                                } catch(e) {
+                                    // renderer closed
+                                }
+                            }
+                        });
+                    }
                 }
 
                 if (this.renderer && this._nextTickUpdateProcess) {
@@ -406,7 +454,17 @@ class Terminal {
                 }
             }, 1000);
 
-            this.tty = this.Pty.spawn(opts.shell || "bash", (opts.params.length > 0 ? opts.params : (process.platform === "win32" ? [] : ["--login"])), {
+            let ptyArgs = (opts.params && opts.params.length > 0)
+                ? (Array.isArray(opts.params) ? opts.params : [opts.params])
+                : (process.platform === "win32"
+                    ? ((opts.shell || "").toLowerCase().includes("powershell")
+                        ? ["-NoLogo", "-NoExit", "-Command", "function prompt { $Host.UI.RawUI.WindowTitle = 'PS ' + (Get-Location).Path; 'PS ' + (Get-Location).Path + '> ' }"]
+                        : ((opts.shell || "").toLowerCase().includes("cmd")
+                            ? ["/k", "prompt $E]0;$P$E\\$P$G"]
+                            : []))
+                    : ["--login"]);
+
+            this.tty = this.Pty.spawn(opts.shell || "bash", ptyArgs, {
                 name: opts.env.TERM || "xterm-256color",
                 cols: 80,
                 rows: 24,
@@ -434,11 +492,15 @@ class Terminal {
                 switch(args[0]) {
                     case "Renderer startup":
                         this.renderer = e.sender;
-                        if (!this._disableCWDtracking && this.tty._cwd) {
-                            this.renderer.send("terminal_channel-"+this.port, "New cwd", this.tty._cwd);
-                        }
-                        if (this._disableCWDtracking) {
-                            this.renderer.send("terminal_channel-"+this.port, "Fallback cwd", opts.cwd || process.env.PWD);
+                        if (process.platform === "win32") {
+                            this.renderer.send("terminal_channel-"+this.port, "New cwd", this.tty._cwd || opts.cwd || process.cwd());
+                        } else {
+                            if (!this._disableCWDtracking && this.tty._cwd) {
+                                this.renderer.send("terminal_channel-"+this.port, "New cwd", this.tty._cwd);
+                            }
+                            if (this._disableCWDtracking) {
+                                this.renderer.send("terminal_channel-"+this.port, "Fallback cwd", opts.cwd || process.env.PWD);
+                            }
                         }
                         break;
                     case "Resize":
