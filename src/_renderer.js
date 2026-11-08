@@ -500,7 +500,7 @@ async function initUI() {
     document.getElementById("filesystem").setAttribute("style", "opacity: 1;");
 
     // Resend terminal CWD to fsDisp if we're hot reloading
-    if (window.performance.navigation.type === 1) {
+    if (window.term[window.currentTerm] && window.term[window.currentTerm].resendCWD) {
         window.term[window.currentTerm].resendCWD();
     }
 

@@ -1,0 +1,44 @@
+{
+    "colors":  {
+                   "r":  216,
+                   "g":  222,
+                   "b":  233,
+                   "black":  "#3B4252",
+                   "red":  "#BF616A",
+                   "green":  "#A3BE8C",
+                   "yellow":  "#EBCB8B",
+                   "blue":  "#81A1C1",
+                   "magenta":  "#B48EAD",
+                   "cyan":  "#88C0D0",
+                   "white":  "#E5E9F0",
+                   "lightBlack":  "#4C566A",
+                   "lightRed":  "#BF616A",
+                   "lightGreen":  "#A3BE8C",
+                   "lightYellow":  "#EBCB8B",
+                   "lightBlue":  "#81A1C1",
+                   "lightMagenta":  "#B48EAD",
+                   "lightCyan":  "#8FBCBB",
+                   "lightWhite":  "#ECEFF4",
+                   "light_black":  "#2E3440",
+                   "grey":  "#4c566a"
+               },
+    "cssvars":  {
+                    "font_main":  "United Sans Medium",
+                    "font_main_light":  "United Sans Light"
+                },
+    "terminal":  {
+                     "fontFamily":  "Fira Mono",
+                     "cursorStyle":  "block",
+                     "foreground":  "#D8DEE9",
+                     "background":  "#2E3440",
+                     "cursor":  "#D8DEE9",
+                     "selection":  "rgba(67, 76, 94, 0.8)"
+                 },
+    "globe":  {
+                  "base":  "#000000",
+                  "marker":  "#EBCB8B",
+                  "pin":  "#81A1C1",
+                  "satellite":  "#BF616A"
+              },
+    "injectCSS":  "section#keyboard{position:absolute;bottom:3%;right:0;width:17%}section#keyboard .keyboard_row{position:absolute;bottom:0;width:100%;text-align:center}section#keyboard .keyboard_key{position:absolute;bottom:0;display:none}section#keyboard .keyboard_key.active,section#keyboard .keyboard_key.blink{position:absolute;bottom:0;display:flex;color:#3B4252}section#keyboard div.keyboard_key#keyboard_spacebar{min-width:auto;width:80%;right:15%}section#keyboard div.keyboard_row#row_2 div.keyboard_key.keyboard_enter{display:none !important}section#keyboard div.keyboard_key[data-cmd^=\"ESCAPED\"]{left:0} section\u003eh3.title:first-child{border-bottom:0}section\u003eh3.title:first-child::before{border-left:0}section\u003eh3.title:first-child::after{border-right:0} section#filesystem{position:absolute;top:auto;left:0;bottom:0;width:17%}section#filesystem\u003eh3.title{width:17%}section#filesystem\u003eh3.title:first-child\u003ep{width:24%}section#filesystem\u003eh3.title:first-child\u003ep:last-child{position:static;right:auto;width:72%}section#filesystem div#fs_disp_container{width:100%}section#filesystem.list-view\u003ediv#fs_disp_container:not(.disks)\u003ediv\u003eh4{font-size:0.8vh}section#filesystem.list-view\u003ediv#fs_disp_container:not(.disks)\u003ediv\u003eh4:nth-of-type(1){display:none}section#filesystem.list-view\u003ediv#fs_disp_container:not(.disks)\u003ediv\u003eh4:nth-of-type(2){width:25%}div#fs_space_bar{display:none} section#main_shell{height:94.5%;padding:0.37vh;position:absolute;top:2.5vh}ul#main_shell_tabs{margin-left:-0.37vh;margin-top:-0.35vh}ul#main_shell_tabs\u003eli{padding-top:0.55vh;padding-bottom:0.2vh}.terminal .xterm-viewport{padding-bottom:0}.xterm{height:100%}.xterm .xterm-screen{top:0.8vh;left:0.4vh}"
+}

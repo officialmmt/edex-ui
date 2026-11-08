@@ -164,6 +164,9 @@ class FilesystemDisplay {
                     }
                 }
             };
+            if (this.readFS && window.term[num].cwd && window.term[num].resendCWD) {
+                window.term[num].resendCWD();
+            }
         };
         this.followTab();
 

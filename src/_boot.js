@@ -224,7 +224,17 @@ app.on('ready', async () => {
     signale.pending(`Loading settings file...`);
     let settings = require(settingsFile);
     signale.pending(`Resolving shell path...`);
-    settings.shell = await which(settings.shell).catch(e => { throw(e) });
+    settings.shell = await which(settings.shell).catch(e => {
+        if (process.platform === "win32") {
+            try {
+                const stdout = require("child_process").execSync(`where.exe ${settings.shell}`, { encoding: "utf8" });
+                const first = stdout.trim().split(/\r?\n/)[0].trim();
+                if (first) return first;
+            } catch (err) {}
+            return settings.shell;
+        }
+        throw e;
+    });
     signale.info(`Shell found at ${settings.shell}`);
     signale.success(`Settings loaded!`);
 

@@ -191,7 +191,7 @@ class Terminal {
             if (this.term && this.term.onTitleChange) {
                 this.term.onTitleChange(title => {
                     if (title) {
-                        const cleanPath = title.replace(/^PS\s+/, '').trim();
+                        const cleanPath = title.replace(/^PS\s+/, '').replace(/^"(.*)"$/, '$1').trim();
                         const fs = require('fs');
                         try {
                             if (fs.existsSync(cleanPath) && fs.statSync(cleanPath).isDirectory()) {
@@ -457,7 +457,7 @@ class Terminal {
             let ptyArgs = (opts.params && opts.params.length > 0)
                 ? (Array.isArray(opts.params) ? opts.params : [opts.params])
                 : (process.platform === "win32"
-                    ? ((opts.shell || "").toLowerCase().includes("powershell")
+                    ? (/(powershell|pwsh)/i.test(opts.shell || "")
                         ? ["-NoLogo", "-NoExit", "-Command", "function prompt { $Host.UI.RawUI.WindowTitle = 'PS ' + (Get-Location).Path; 'PS ' + (Get-Location).Path + '> ' }"]
                         : ((opts.shell || "").toLowerCase().includes("cmd")
                             ? ["/k", "prompt $E]0;$P$E\\$P$G"]
