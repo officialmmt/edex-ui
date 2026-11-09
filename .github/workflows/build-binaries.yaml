@@ -32,6 +32,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 14
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
     - name: Setup npm
       run: sudo npm i -g npm@7
     - name: Install build deps
@@ -127,7 +131,7 @@ jobs:
         if-no-files-found: error
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
     - name: Get npm cache directory
@@ -151,6 +155,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 14
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
     - name: Setup npm
       run: npm i -g npm@7
     - name: npm install
@@ -166,7 +174,7 @@ jobs:
         if-no-files-found: error
 
   build-darwin:
-    runs-on: macos-latest
+    runs-on: macos-15-intel
     steps:
     - uses: actions/checkout@v4
     - name: Cache node modules
@@ -190,6 +198,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 14
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
     - name: Setup npm
       run: sudo npm i -g npm@7
     - name: npm install
