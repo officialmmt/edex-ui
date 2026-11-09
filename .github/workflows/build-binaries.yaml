@@ -219,11 +219,14 @@ jobs:
     - name: npm install
       run: npm install
     - name: npm build
-      run: npm run build-darwin
+      run: |
+        npm run prebuild-darwin
+        if [ $? -ne 0 ]; then exit 1; fi
+        ./node_modules/.bin/electron-builder build -m zip
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - uses: actions/upload-artifact@v4
       with:
         name: MacOS-Image
-        path: dist/*.dmg
+        path: dist/*.zip
         if-no-files-found: error
