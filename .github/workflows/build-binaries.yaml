@@ -1,6 +1,26 @@
 name: Build packaged binaries
 
-on: [push, pull_request, create, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  create:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v2.3.0)'
+        required: false
+        type: string
+        default: ''
+      draft:
+        description: 'Publish as draft?'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Publish as pre-release?'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build-linux:
@@ -230,3 +250,58 @@ jobs:
         name: MacOS-Image
         path: dist/*.zip
         if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: [build-linux, build-linux-arm32, build-linux-arm64, build-windows, build-darwin]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-release
+          merge-multiple: true
+
+      - name: Inspect downloaded binaries
+        run: |
+          echo "=== Downloaded artifacts in dist-release ==="
+          ls -lh dist-release
+
+      - name: Generate SHA-256 Checksums
+        run: |
+          cd dist-release
+          sha256sum * > /tmp/SHA256SUMS.txt
+          mv /tmp/SHA256SUMS.txt SHA256SUMS.txt
+          echo "=== Generated SHA256SUMS.txt ==="
+          cat SHA256SUMS.txt
+          cd ..
+
+      - name: Determine Release Tag & Title
+        id: release_info
+        run: |
+          if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = "true" ]; then
+            TAG="${{ github.ref_name }}"
+          elif [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "2.3.0")
+            TAG="v${VERSION}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: ${{ steps.release_info.outputs.tag }}
+          files: dist-release/*
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
