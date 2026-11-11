@@ -7,7 +7,7 @@ if (cluster.isMaster) {
     // Also, leave a core available for the renderer process
     const osCPUs = require("os").cpus().length - 1;
     // See #904
-    const numCPUs = (osCPUs > 7) ? 7 : osCPUs;
+    const numCPUs = (osCPUs > 2) ? 2 : osCPUs;
 
     const si = require("systeminformation");
 

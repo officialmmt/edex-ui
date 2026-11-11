@@ -194,7 +194,7 @@ function createWindow(settings) {
             devTools: true,
 	    enableRemoteModule: true,
             contextIsolation: false,
-            backgroundThrottling: false,
+            backgroundThrottling: true,
             webSecurity: true,
             nodeIntegration: true,
             nodeIntegrationInSubFrames: false,

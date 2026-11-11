@@ -62,7 +62,7 @@ class LocationGlobe {
                             // We probably got caught in a theme change. Print it out but everything should keep running fine.
                             console.warn(e);
                         }
-                    }, 1000 / 30);
+                    }, 1000 / 15);
                 }
             };
             this.globe.init(window.theme.colors.light_black, () => {
@@ -124,12 +124,12 @@ class LocationGlobe {
             this.updateLoc();
             this.locUpdater = setInterval(() => {
                 this.updateLoc();
-            }, 1000);
+            }, 5000);
 
             this.updateConns();
             this.connsUpdater = setInterval(() => {
                 this.updateConns();
-            }, 3000);
+            }, 8000);
         }, 4000);
     }
 

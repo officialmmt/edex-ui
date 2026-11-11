@@ -338,6 +338,29 @@ class FilesystemDisplay {
                 }
             });
 
+            if (devices.length === 0 && process.platform === "win32") {
+                const cp = require("child_process");
+                for (let i = 65; i <= 90; i++) {
+                    const letter = String.fromCharCode(i) + ":";
+                    const drivePath = letter + "\\";
+                    try {
+                        if (fs.existsSync(drivePath)) {
+                            let label = "";
+                            try {
+                                const out = cp.execSync(`cmd.exe /c "vol ${letter}"`, { encoding: "utf8", windowsHide: true });
+                                const m = out.match(/Volume in drive [A-Z] is (.*)/i);
+                                if (m && m[1].trim()) label = m[1].trim();
+                            } catch (err) {}
+                            devices.push({
+                                name: label ? `${label} (${letter})` : `Local Disk (${letter})`,
+                                type: "disk",
+                                path: drivePath
+                            });
+                        }
+                    } catch (err) {}
+                }
+            }
+
             this.render(devices, true);
         };
 
@@ -565,11 +588,48 @@ class FilesystemDisplay {
                 this.space_bar.text.innerHTML = "Could not calculate mountpoint usage.";
                 this.space_bar.bar.value = 100;
             }).then(d => {
-                d.forEach(fsBlock => {
-                    if (path.startsWith(fsBlock.mount)) {
-                        this.fsBlock = fsBlock;
+                if (d && Array.isArray(d)) {
+                    d.forEach(fsBlock => {
+                        if (path.startsWith(fsBlock.mount)) {
+                            this.fsBlock = fsBlock;
+                        }
+                    });
+                }
+                if (!this.fsBlock && process.platform === "win32") {
+                    if (!this._diskUsageCache) this._diskUsageCache = {};
+                    const driveLetter = path.slice(0, 1).toUpperCase();
+                    const now = Date.now();
+                    if (this._diskUsageCache[driveLetter] && (now - this._diskUsageCache[driveLetter].time < 15000)) {
+                        this.fsBlock = this._diskUsageCache[driveLetter].data;
+                        this.renderDiskUsage(this.fsBlock);
+                        return;
                     }
-                });
+                    try {
+                        const cp = require("child_process");
+                        const psCmd = `powershell -NoProfile -Command "$d = New-Object System.IO.DriveInfo('${driveLetter}'); if($d.TotalSize -gt 0){ [Math]::Round((($d.TotalSize - $d.TotalFreeSpace) / $d.TotalSize) * 100) }"`;
+                        cp.exec(psCmd, { encoding: "utf8", windowsHide: true, timeout: 3000 }, (err, stdout) => {
+                            if (!err && stdout) {
+                                const pct = parseInt(stdout.trim(), 10);
+                                if (!isNaN(pct)) {
+                                    const block = { mount: driveLetter + ":\\", use: pct };
+                                    this.fsBlock = block;
+                                    this._diskUsageCache[driveLetter] = { data: block, time: Date.now() };
+                                    this.renderDiskUsage(this.fsBlock);
+                                    return;
+                                }
+                            }
+                            if (this.fsBlock === null) {
+                                this.space_bar.text.innerHTML = "Could not calculate mountpoint usage.";
+                                this.space_bar.bar.value = 100;
+                            }
+                        });
+                        return;
+                    } catch (e) {}
+                }
+                if (this.fsBlock === null) {
+                    this.space_bar.text.innerHTML = "Could not calculate mountpoint usage.";
+                    this.space_bar.bar.value = 100;
+                }
                 this.renderDiskUsage(this.fsBlock);
             });
         };

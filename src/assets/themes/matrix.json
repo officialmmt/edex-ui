@@ -3,9 +3,9 @@
         "r": 0,
         "g": 143,
         "b": 17,
-        "black": "#0D0208",
-        "light_black": "#090B0A",
-        "grey": "#262827"
+        "black": "#010a03",
+        "light_black": "#051307",
+        "grey": "#172b1a"
     },
     "cssvars": {
         "font_main": "United Sans Medium",
@@ -15,7 +15,7 @@
         "fontFamily": "Fira Mono",
         "cursorStyle": "underline",
         "foreground": "#00ff41",
-        "background": "#0D0208",
+        "background": "#020d04",
         "cursor": "#00ff41",
         "cursorAccent": "#00ff41",
         "selection": "#008f11"

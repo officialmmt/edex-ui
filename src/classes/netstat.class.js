@@ -39,7 +39,7 @@ class Netstat {
         this.updateInfo();
         this.infoUpdater = setInterval(() => {
             this.updateInfo();
-        }, 2000);
+        }, 5000);
 
         // Init GeoIP integrated backend
         this.geoLookup = {

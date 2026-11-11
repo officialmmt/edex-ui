@@ -24,7 +24,7 @@ class Conninfo {
 
         // Set chart options
         let chartOptions = [{
-            limitFPS: 40,
+            limitFPS: 15,
             responsive: true,
             millisPerPixel: 70,
             interpolation: 'linear',
@@ -52,14 +52,14 @@ class Conninfo {
         this.charts[0].addTimeSeries(this.series[0], {lineWidth:1.7,strokeStyle:`rgb(${window.theme.r},${window.theme.g},${window.theme.b})`});
         this.charts[1].addTimeSeries(this.series[1], {lineWidth:1.7,strokeStyle:`rgb(${window.theme.r},${window.theme.g},${window.theme.b})`});
 
-        this.charts[0].streamTo(document.getElementById("mod_conninfo_canvas_top"), 1000);
-        this.charts[1].streamTo(document.getElementById("mod_conninfo_canvas_bottom"), 1000);
+        this.charts[0].streamTo(document.getElementById("mod_conninfo_canvas_top"), 2500);
+        this.charts[1].streamTo(document.getElementById("mod_conninfo_canvas_bottom"), 2500);
 
         // Init updater
         this.updateInfo();
         this.infoUpdater = setInterval(() => {
             this.updateInfo();
-        }, 1000);
+        }, 2500);
     }
     updateInfo() {
         let time = new Date().getTime();
